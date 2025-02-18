@@ -1,6 +1,5 @@
 ---
-layout: default
+layout: deepseek
 title:  "Deepseek"
-published: false
 ---
 
