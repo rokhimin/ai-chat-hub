@@ -16,7 +16,7 @@ https://ai-chat-hub-chi.vercel.app
 
 ## Contributing
 
-Bug reports and pull requests are welcome on GitHub at https://github.com/Rokhimin/jekyll-ai-message/. This project is intended to be a safe, welcoming space for collaboration, and contributors are expected to adhere to the [Contributor Covenant](https://www.contributor-covenant.org/) code of conduct.
+Bug reports and pull requests are welcome on GitHub at https://github.com/Rokhimin/ai-chat-hub/. This project is intended to be a safe, welcoming space for collaboration, and contributors are expected to adhere to the [Contributor Covenant](https://www.contributor-covenant.org/) code of conduct.
 
 ## Development
 
