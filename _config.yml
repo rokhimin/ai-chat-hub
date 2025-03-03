@@ -1,10 +1,9 @@
-
-title: whdzera
+title: AI Chat Hub
 email: whdzera@gmail.com
-baseurl: "/jekyll-ai-message" # the subpath of your site, e.g. /blog
-url: "" # the base hostname & protocol for your site, e.g. http://example.com
+baseurl: "" 
+url: "" 
 twitter_username: whdzera
-github_username:  rokhimin/jekyll-ai-message
+github_username:  rokhimin/ai-chat-hub
 
 permalink: /:title.rb
-files: "/jekyll-ai-message"
+files: ""

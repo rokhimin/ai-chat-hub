@@ -1,5 +1,0 @@
----
-layout: liquid
-title:  "Liquid AI"
----
-

@@ -1,5 +1,0 @@
----
-layout: gemini
-title:  "Gemini Ai"
----
-
