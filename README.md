@@ -1,12 +1,18 @@
-
 #ReadMe
 
 #### About
-A Jekyll App message with AI ( Gemini,Deepseek,ChatGPT ) using API
+App chat with AI ( Gemini,Deepseek,ChatGPT,etc ) 
 
+##### Library
+- Jekyll
+- Css (Bulma, Font-Awesome)
+- Js (Jquery)
+- Api (official google and Openrouter.ai)
 
-Live demo : http://rokhimin.github.io/jekyll-ai-message/
+##### Live demo 
+http://rokhimin.github.io/ai-chat-hub
 
+https://ai-chat-hub-chi.vercel.app
 
 ## Contributing
 
