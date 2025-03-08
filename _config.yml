@@ -4,6 +4,3 @@ baseurl: "/ai-chat-hub"
 url: "" 
 twitter_username: whdzera
 github_username:  rokhimin/ai-chat-hub
-
-permalink: /:title.rb
-files: ""
