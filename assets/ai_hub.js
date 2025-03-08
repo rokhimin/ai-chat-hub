@@ -1,8 +1,14 @@
 
+// Shared global variables for API functions
+let makeGeminiRequest;
+let makeOpenRouterRequest;
+let formatResponse;
+
 $(document).ready(function() {
   // Model definitions
   const modelOptions = {
     gemini: [
+      { id: "gemini-2.0-flash", name: "gemini 2.0 flash", supportsImages: true },
       { id: "gemini-1.5-flash", name: "Gemini 1.5 Flash", supportsImages: true },
       { id: "gemini-1.5-pro", name: "Gemini 1.5 Pro", supportsImages: true }
     ],
@@ -164,8 +170,8 @@ $(document).ready(function() {
     $("#image-upload").val("");
   });
   
-  // Format AI response
-  function formatResponse(text) {
+  // Format AI response - Make this available globally
+  formatResponse = function(text) {
     // Handle code blocks
     text = text.replace(/```([\s\S]*?)```/g, function(match, code) {
       return `<pre style="background-color: #121212; padding: 10px; border-radius: 4px; overflow-x: auto;"><code>${code}</code></pre>`;
@@ -178,15 +184,15 @@ $(document).ready(function() {
     text = text.replace(/\n/g, '<br>');
     
     return text;
-  }
+  };
   
   // Get MIME type from dataURL
   function getMimeType(dataURL) {
     return dataURL.split(',')[0].split(':')[1].split(';')[0];
   }
   
-  // Make request to OpenRouter API
-  function makeOpenRouterRequest(inputText, apiKey, callback) {
+  // Make request to OpenRouter API - Make this available globally
+  makeOpenRouterRequest = function(inputText, apiKey, callback) {
     const messages = [];
     
     // Add chat history for context
@@ -281,10 +287,10 @@ $(document).ready(function() {
         callback(errorMessage, null);
       }
     });
-  }
+  };
   
-  // Make request to Google Gemini API
-  function makeGeminiRequest(inputText, apiKey, callback) {
+  // Make request to Google Gemini API - Make this available globally
+  makeGeminiRequest = function(inputText, apiKey, callback) {
     // Prepare request data
     const requestData = {
       contents: [{
@@ -337,7 +343,7 @@ $(document).ready(function() {
         callback(errorMessage, null);
       }
     });
-  }
+  };
   
   // Form submit handler
   $("#form").submit(function(event) {
@@ -412,5 +418,423 @@ $(document).ready(function() {
     
     // Scroll to bottom
     $("#chat-container").scrollTop($("#chat-container")[0].scrollHeight);
+  }
+});
+
+// Speech to AI Implementation - Fixed version
+document.addEventListener('DOMContentLoaded', function() {
+  // Speech recognition & synthesis variables
+  let recognition = null;
+  let isListening = false;
+  let isSpeaking = false;
+  let speechTimeout;
+  let transcript = '';
+  let micPermissionGranted = false;
+  
+  // DOM Elements - Initialize references after the document is fully loaded
+  const startVoiceBtn = document.getElementById('startVoiceBtn');
+  const stopVoiceBtn = document.getElementById('stopVoiceBtn');
+  const voiceStatus = document.getElementById('voiceStatus');
+  const speechTranscript = document.getElementById('speechTranscript');
+  
+  // Check if elements exist
+  if (!startVoiceBtn || !stopVoiceBtn || !voiceStatus || !speechTranscript) {
+    console.error('Voice elements not found in DOM');
+    return; // Exit if elements don't exist
+  }
+  
+  // Request microphone permission
+  async function requestMicrophonePermission() {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      
+      // Close the stream once we have permission
+      stream.getTracks().forEach(track => track.stop());
+      
+      micPermissionGranted = true;
+      return true;
+    } catch (error) {
+      console.error('Microphone permission denied:', error);
+      if (voiceStatus) {
+        voiceStatus.textContent = 'Error: Microphone permission denied';
+      }
+      return false;
+    }
+  }
+  
+  // Initialize speech recognition
+  async function initSpeechRecognition() {
+    // Ensure we have microphone permission
+    if (!micPermissionGranted) {
+      const permissionGranted = await requestMicrophonePermission();
+      if (!permissionGranted) {
+        return false;
+      }
+    }
+    
+    // Check browser support
+    window.SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    
+    if (!window.SpeechRecognition) {
+      if (voiceStatus) {
+        voiceStatus.textContent = 'Error: Speech recognition not supported in this browser';
+      }
+      return false;
+    }
+    
+    // Create new recognition instance
+    recognition = new SpeechRecognition();
+    recognition.lang = 'id-ID'; // Indonesian language - change as needed
+    recognition.continuous = true;
+    recognition.interimResults = true;
+    
+    recognition.onstart = () => {
+      isListening = true;
+      if (voiceStatus) {
+        voiceStatus.innerHTML = '<i class="fas fa-circle text-danger mr-1"></i> Listening...';
+      }
+      if (startVoiceBtn) startVoiceBtn.disabled = true;
+      if (stopVoiceBtn) stopVoiceBtn.disabled = false;
+    };
+    
+    recognition.onresult = (event) => {
+      let interimTranscript = '';
+      let finalTranscriptSegment = '';
+      
+      // Clear timeout whenever we get new speech
+      clearTimeout(speechTimeout);
+      
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        const result = event.results[i];
+        if (result.isFinal) {
+          finalTranscriptSegment = result[0].transcript;
+          transcript += finalTranscriptSegment + ' ';
+        } else {
+          interimTranscript += result[0].transcript;
+        }
+      }
+      
+      if (speechTranscript) {
+        speechTranscript.innerHTML = transcript + '<i class="has-text-grey">' + interimTranscript + '</i>';
+      }
+      
+      // If we have a final transcript segment, start the speech pause timer
+      if (finalTranscriptSegment) {
+        speechTimeout = setTimeout(() => {
+          // Only send to AI if we're not already speaking a response
+          if (!isSpeaking && transcript.trim() !== '') {
+            sendToAI(transcript.trim());
+          }
+        }, 1500); // Wait 1.5 seconds of silence before sending
+      }
+    };
+    
+    recognition.onerror = (event) => {
+      if (voiceStatus) {
+        voiceStatus.textContent = `Error: ${event.error}`;
+      }
+      
+      // Restart recognition if it's not a fatal error
+      if (event.error !== 'aborted' && event.error !== 'not-allowed' && isListening) {
+        setTimeout(() => {
+          if (isListening && recognition) {
+            try {
+              recognition.start();
+            } catch (e) {
+              console.error('Failed to restart recognition:', e);
+            }
+          }
+        }, 1000);
+      } else {
+        if (startVoiceBtn) startVoiceBtn.disabled = false;
+        if (stopVoiceBtn) stopVoiceBtn.disabled = true;
+        isListening = false;
+      }
+    };
+    
+    recognition.onend = () => {
+      // Restart recognition if we're still supposed to be listening
+      if (isListening) {
+        try {
+          recognition.start();
+        } catch (e) {
+          console.error('Failed to restart recognition:', e);
+          isListening = false;
+          if (startVoiceBtn) startVoiceBtn.disabled = false;
+          if (stopVoiceBtn) stopVoiceBtn.disabled = true;
+          if (voiceStatus) {
+            voiceStatus.textContent = 'Speech recognition error. Please try again.';
+          }
+        }
+      } else {
+        if (voiceStatus) {
+          voiceStatus.textContent = 'Speech recognition stopped';
+        }
+        if (startVoiceBtn) startVoiceBtn.disabled = false;
+        if (stopVoiceBtn) stopVoiceBtn.disabled = true;
+      }
+    };
+    
+    return true;
+  }
+  
+  // Send recognized speech to AI
+  function sendToAI(text) {
+    if (!text) return;
+    
+    // Get current model and API key from the main app
+    const apiKey = document.getElementById('api_key').value.trim();
+    const currentApiProvider = document.getElementById('api-provider-selector').value;
+    const currentModel = document.getElementById('model-selector').value;
+    
+    if (!apiKey) {
+      appendAIMessage("Error: API key is required");
+      return;
+    }
+    
+    if (voiceStatus) {
+      voiceStatus.innerHTML = '<i class="fas fa-sync fa-spin mr-1"></i> Sending to AI...';
+    }
+    
+    // Pause listening while processing
+    pauseListening();
+    
+    // FIX: Instead of appending user message and calling form submission
+    // Just use the API directly
+    appendUserMessage(text);
+    
+    // Use the globally defined API request functions
+    if (currentApiProvider === "gemini") {
+      if (typeof makeGeminiRequest === 'function') {
+        makeGeminiRequest(text, apiKey, handleVoiceResponse);
+      } else {
+        handleVoiceResponse("Error: Gemini API function not available", null);
+      }
+    } else if (currentApiProvider === "openrouter") {
+      if (typeof makeOpenRouterRequest === 'function') {
+        makeOpenRouterRequest(text, apiKey, handleVoiceResponse);
+      } else {
+        handleVoiceResponse("Error: OpenRouter API function not available", null);
+      }
+    }
+    
+    // Reset transcript for next conversation
+    transcript = '';
+    if (speechTranscript) {
+      speechTranscript.textContent = '';
+    }
+  }
+  
+  // Handle AI response for voice
+  function handleVoiceResponse(error, response) {
+    if (error) {
+      if (voiceStatus) {
+        voiceStatus.textContent = `Error: ${error}`;
+      }
+      resumeListening();
+      return;
+    }
+    
+    // Add the AI response to the chat
+    appendAIMessage(response);
+    
+    // Clean text for speech synthesis
+    const cleanedResponse = cleanTextForSpeech(response);
+    
+    // Speak the response
+    speakResponse(cleanedResponse);
+  }
+  
+  // Clean text for speech synthesis
+  function cleanTextForSpeech(text) {
+    // Remove special characters that cause poor speech synthesis
+    return text.replace(/[*#$%^&\\|<>{}\[\]~`]/g, '')
+              .replace(/\+/g, ' plus ')
+              .replace(/=/g, ' equals ')
+              .replace(/\-/g, ' ')  // Replace dash with space
+              .replace(/```[\s\S]*?```/g, '') // Remove code blocks
+              .replace(/`([^`]+)`/g, '$1') // Remove inline code formatting
+              .replace(/\s+/g, ' '); // Replace multiple spaces with single space
+  }
+  
+  // Speak response using speech synthesis
+  function speakResponse(text) {
+    if (!text) return;
+    
+    if (!window.speechSynthesis) {
+      if (voiceStatus) {
+        voiceStatus.textContent = 'Error: Text-to-speech not supported in this browser';
+      }
+      resumeListening();
+      return;
+    }
+    
+    if (voiceStatus) {
+      voiceStatus.innerHTML = '<i class="fas fa-volume-up mr-1"></i> Speaking...';
+    }
+    isSpeaking = true;
+    
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = 'id-ID'; // Indonesian language - change as needed
+    
+    utterance.onend = () => {
+      if (voiceStatus) {
+        voiceStatus.innerHTML = '<i class="fas fa-check mr-1"></i> Done speaking. Listening again...';
+      }
+      isSpeaking = false;
+      
+      // Resume listening after speaking
+      if (isListening) {
+        resumeListening();
+      }
+    };
+    
+    utterance.onerror = () => {
+      if (voiceStatus) {
+        voiceStatus.textContent = 'Error: Speech synthesis error';
+      }
+      isSpeaking = false;
+      
+      // Resume listening after error
+      if (isListening) {
+        resumeListening();
+      }
+    };
+    
+    window.speechSynthesis.speak(utterance);
+  }
+  
+  // Helper function to append user message to chat
+  function appendUserMessage(text) {
+    const chatContainer = document.getElementById('chat-container');
+    if (!chatContainer) return;
+    
+    chatContainer.innerHTML += `<p class="mb-3"><strong>You:</strong> ${text}</p>`;
+    chatContainer.scrollTop = chatContainer.scrollHeight;
+    
+    // Also update the message input to show the sent message
+    const messageInput = document.getElementById('message');
+    if (messageInput) {
+      messageInput.value = text;
+    }
+    
+    // FIX: No longer trigger form submission to avoid duplication
+  }
+  
+  // Helper function to append AI message to chat
+  function appendAIMessage(text) {
+    const chatContainer = document.getElementById('chat-container');
+    if (!chatContainer) return;
+    
+    // Format the response using the existing formatResponse function
+    // If it doesn't exist or is not accessible, use a simple version
+    const formattedText = typeof formatResponse === 'function' 
+      ? formatResponse(text) 
+      : text.replace(/\n/g, '<br>');
+    
+    chatContainer.innerHTML += `<p class="mb-3"><strong>AI Assistant:</strong> ${formattedText}</p>`;
+    chatContainer.scrollTop = chatContainer.scrollHeight;
+  }
+  
+  // Pause listening
+  function pauseListening() {
+    if (recognition && isListening) {
+      try {
+        recognition.stop();
+      } catch (e) {
+        console.error('Error stopping recognition:', e);
+      }
+    }
+  }
+  
+  // Resume listening
+  function resumeListening() {
+    if (recognition && isListening) {
+      try {
+        setTimeout(() => {
+          recognition.start();
+        }, 100);
+      } catch (e) {
+        console.error('Error starting recognition:', e);
+        isListening = false;
+        if (startVoiceBtn) startVoiceBtn.disabled = false;
+        if (stopVoiceBtn) stopVoiceBtn.disabled = true;
+      }
+    }
+  }
+  
+  // Start voice conversation
+  async function startVoiceConversation() {
+    // Reset states
+    transcript = '';
+    if (speechTranscript) {
+      speechTranscript.textContent = '';
+    }
+    
+    // Make sure we stop any existing recognition
+    if (recognition) {
+      try {
+        recognition.stop();
+        recognition = null;
+      } catch (e) {
+        console.error('Error stopping existing recognition:', e);
+      }
+    }
+    
+    // Set listening flag before initializing
+    isListening = true;
+    
+    // Initialize a fresh recognition instance
+    const success = await initSpeechRecognition();
+    
+    if (success && recognition) {
+      try {
+        recognition.start();
+      } catch (e) {
+        console.error('Error starting recognition:', e);
+        isListening = false;
+        if (startVoiceBtn) startVoiceBtn.disabled = false;
+        if (stopVoiceBtn) stopVoiceBtn.disabled = true;
+        if (voiceStatus) {
+          voiceStatus.textContent = 'Failed to start speech recognition. Please try again.';
+        }
+      }
+    }
+  }
+  
+  // Stop voice conversation
+  function stopVoiceConversation() {
+    isListening = false;
+    
+    if (recognition) {
+      try {
+        recognition.stop();
+      } catch (e) {
+        console.error('Error stopping recognition:', e);
+      }
+    }
+    
+    if (window.speechSynthesis) {
+      window.speechSynthesis.cancel();
+    }
+    
+    isSpeaking = false;
+    clearTimeout(speechTimeout);
+    
+    if (voiceStatus) {
+      voiceStatus.textContent = 'Voice chat stopped';
+    }
+    
+    if (startVoiceBtn) startVoiceBtn.disabled = false;
+    if (stopVoiceBtn) stopVoiceBtn.disabled = true;
+  }
+  
+  // Event listeners
+  if (startVoiceBtn) {
+    startVoiceBtn.addEventListener('click', startVoiceConversation);
+  }
+  
+  if (stopVoiceBtn) {
+    stopVoiceBtn.addEventListener('click', stopVoiceConversation);
   }
 });

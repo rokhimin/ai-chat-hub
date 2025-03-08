@@ -1,120 +1,149 @@
 ---
 layout: default
 ---
-
 <div class="hero has-background-black-bis is-fullheight">
-    <div class="hero-body">
-      <div class="container">
-        <div class="columns is-centered">
-          <div class="column is-8">
-            
-            <div class="has-text-centered mb-4">
-              <h1 class="title has-text-light">
-                <i class="fas fa-robot mr-2"></i> AI Chat Hub
-              </h1>
-            </div>
-            
-            <div class="card has-background-dark">
-              <div class="card-content">
-                
-                <!-- API Selector -->
-                <div class="field mb-4">
-                  <label class="label has-text-light">API Provider</label>
-                  <div class="control">
-                    <div class="select is-fullwidth">
-                      <select id="api-provider-selector">
-                        <option value="gemini">Google Gemini</option>
-                        <option value="openrouter">OpenRouter</option>
-                      </select>
-                    </div>
-                  </div>
-                </div>
-                
-                <!-- Model Selector (dynamically populated) -->
-                <div class="field mb-4">
-                  <label class="label has-text-light">Model</label>
-                  <div class="control">
-                    <div class="select is-fullwidth">
-                      <select id="model-selector"></select>
-                    </div>
-                  </div>
-                </div>
-                
-                <!-- API Key -->
-                <div class="field mb-4">
-                  <label class="label has-text-light">
-                    API Key <span class="has-text-danger">*</span>
-                  </label>
-                  <div class="control has-icons-right">
-                    <input class="input" id="api_key" type="password" placeholder="Enter your API key">
-                    <span class="icon is-right is-clickable" id="toggle-visibility">
-                      <i class="fas fa-eye"></i>
-                    </span>
-                  </div>
-                  <p class="help has-text-grey-light">
-                    <span id="api-key-help">Enter your API key for the selected provider</span>
-                  </p>
-                </div>
-                
-                <!-- Chat Container -->
-                <div class="box has-background-black-ter has-text-light mb-4" 
-                     style="max-height: 400px; overflow-y: auto;" 
-                     id="chat-container">
-                  <!-- Chat messages will appear here -->
-                </div>
-                
-                <!-- Image Preview -->
-                <div id="image-preview-container" style="display: none; margin-bottom: 10px;">
-                  <div class="box has-background-black-ter p-2 has-text-centered" 
-                       style="position: relative;">
-                    <img id="image-preview" style="max-height: 200px; max-width: 100%;">
-                    <button type="button" id="remove-image" 
-                            class="delete is-medium" 
-                            style="position: absolute; top: 5px; right: 5px;"></button>
-                  </div>
-                </div>
-                
-                <!-- Input Form -->
-                <form id="form" class="mt-4">
-                  <div class="field">
-                    <textarea class="textarea" id="message" placeholder="Type your message here..."></textarea>
-                  </div>
-                  
-                  <div class="field is-grouped">
-                    <div class="control">
-                      <div class="file is-small">
-                        <label class="file-label">
-                          <input class="file-input" type="file" id="image-upload" accept="image/*">
-                          <span class="file-cta">
-                            <span class="file-icon">
-                              <i class="fas fa-image"></i>
-                            </span>
-                            <span class="file-label">
-                              Add Image
-                            </span>
-                          </span>
-                        </label>
-                      </div>
-                    </div>
-                    
-                    <div class="control is-expanded has-text-right">
-                      <button type="submit" class="button is-primary">
-                        <span class="icon">
-                          <i class="fas fa-paper-plane"></i>
-                        </span>
-                        <span>Send</span>
-                      </button>
-                    </div>
-                  </div>
-                </form>
-                
-              </div>
-            </div>
-            
+  <div class="hero-body">
+    <div class="container">
+      <div class="columns is-centered">
+        <div class="column is-8">
+          
+          <div class="has-text-centered mb-4">
+            <h1 class="title has-text-light">
+              <i class="fas fa-robot mr-2"></i> AI Chat Hub
+            </h1>
           </div>
+          
+          <div class="card has-background-dark">
+            <div class="card-content">
+              
+              <!-- API Selector -->
+              <div class="field mb-4">
+                <label class="label has-text-light">API Provider</label>
+                <div class="control">
+                  <div class="select is-fullwidth">
+                    <select id="api-provider-selector">
+                      <option value="gemini">Google Gemini</option>
+                      <option value="openrouter">OpenRouter</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Model Selector (dynamically populated) -->
+              <div class="field mb-4">
+                <label class="label has-text-light">Model</label>
+                <div class="control">
+                  <div class="select is-fullwidth">
+                    <select id="model-selector"></select>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- API Key -->
+              <div class="field mb-4">
+                <label class="label has-text-light">
+                  API Key <span class="has-text-danger">*</span>
+                </label>
+                <div class="control has-icons-right">
+                  <input class="input" id="api_key" type="password" placeholder="Enter your API key">
+                  <span class="icon is-right is-clickable" id="toggle-visibility">
+                    <i class="fas fa-eye"></i>
+                  </span>
+                </div>
+                <p class="help has-text-grey-light">
+                  <span id="api-key-help">Enter your API key for the selected provider</span>
+                </p>
+              </div>
+              
+              <!-- Chat Container -->
+              <div class="box has-background-black-ter has-text-light mb-4" 
+                   style="max-height: 400px; overflow-y: auto;" 
+                   id="chat-container">
+                <!-- Chat messages will appear here -->
+              </div>
+              
+              <!-- Image Preview -->
+              <div id="image-preview-container" style="display: none; margin-bottom: 10px;">
+                <div class="box has-background-black-ter p-2 has-text-centered" 
+                     style="position: relative;">
+                  <img id="image-preview" style="max-height: 200px; max-width: 100%;">
+                  <button type="button" id="remove-image" 
+                          class="delete is-medium" 
+                          style="position: absolute; top: 5px; right: 5px;"></button>
+                </div>
+              </div>
+              
+              <!-- Input Form -->
+              <form id="form" class="mt-4">
+                <div class="field">
+                  <textarea class="textarea" id="message" placeholder="Type your message here..."></textarea>
+                </div>
+                
+                <div class="field is-grouped">
+                  <div class="control">
+                    <div class="file is-small">
+                      <label class="file-label">
+                        <input class="file-input" type="file" id="image-upload" accept="image/*">
+                        <span class="file-cta">
+                          <span class="file-icon">
+                            <i class="fas fa-image"></i>
+                          </span>
+                          <span class="file-label">
+                            Add Image
+                          </span>
+                        </span>
+                      </label>
+                    </div>
+                  </div>
+
+
+                  
+                  <div class="control is-expanded has-text-right">
+                    <button type="submit" class="button is-primary">
+                      <span class="icon">
+                        <i class="fas fa-paper-plane"></i>
+                      </span>
+                      <span>Send</span>
+                    </button>
+                  </div>
+                </div>
+              </form>
+              
+            </div>
+          </div>
+
+          <!-- Speech to AI Implementation -->
+<div class="speech-controls card has-background-dark mb-4">
+  <div class="card-content">
+    <h3 class="title has-text-light is-4">
+      <i class="fas fa-microphone mr-2"></i> Voice Conversation
+    </h3>
+    
+    <div class="buttons mb-3">
+      <button id="startVoiceBtn" class="button is-primary">
+        <span class="icon"><i class="fas fa-microphone"></i></span>
+        <span>Start Voice Chat</span>
+      </button>
+      <button id="stopVoiceBtn" class="button is-danger" disabled>
+        <span class="icon"><i class="fas fa-stop"></i></span>
+        <span>Stop Voice Chat</span>
+      </button>
+    </div>
+    
+    <div class="voice-status has-text-grey-light mb-3">
+      <p id="voiceStatus">Voice chat inactive. Press "Start Voice Chat" to begin.</p>
+    </div>
+    
+    <div class="box has-background-black-ter has-text-light mb-3" style="min-height: 50px;">
+      <p><strong>Your Speech:</strong></p>
+      <p id="speechTranscript" class="mt-2"></p>
+    </div>
+  </div>
+</div>
+          
         </div>
       </div>
     </div>
   </div>
-  
+</div>
 <script src="{{ site.files }}/assets/ai_hub.js"></script>
