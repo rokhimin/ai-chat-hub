@@ -1,7 +1,15 @@
 #ReadMe
 
+![Lang](https://img.shields.io/badge/language-javascript-yellow)
+
 #### About
-App chat with AI ( Gemini,Deepseek,ChatGPT,etc ) 
+App chat with AI ( Gemini,Deepseek,ChatGPT,etc )
+
+#### Features
+- Change Model AI
+- Chat text
+- Send Image
+- Voice Conversation
 
 ##### Library
 - Jekyll
